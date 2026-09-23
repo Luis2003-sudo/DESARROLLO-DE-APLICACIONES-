@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portafolio | Desarrollo de Aplicaciones</title>
+  <meta name="description" content="Portafolio académico de Espinal Huaman Luis - Ingeniería de Sistemas">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <div class="scanlines"></div>
+
+  <header class="topbar">
+    <a class="brand" href="index.html">
+      <span class="brand-mark">◆</span>
+      <span>ULA<span class="accent">.PORTFOLIO</span></span>
+    </a>
+    <nav>
+      <a href="#inicio">Inicio</a>
+      <a href="#datos">Mis datos</a>
+      <a href="#unidades">Unidades</a>
+      <a class="nav-admin" href="admin.html">⚡ Admin</a>
+    </nav>
+  </header>
+
+  <main id="inicio">
+    <section class="hero section-wrap">
+      <div class="hero-copy">
+        <p class="eyebrow">PORTAFOLIO ACADÉMICO // 2026</p>
+        <h1>DESARROLLO<br><span>DE APLICACIONES</span></h1>
+        <p class="hero-subtitle">UNIVERSIDAD PERUANA LOS ANDES</p>
+        <p class="hero-career">INGENIERÍA DE SISTEMAS</p>
+        <p class="hero-text">
+          Espacio digital para organizar, presentar y consultar los trabajos realizados durante el curso.
+        </p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="#unidades">VER ACTIVIDADES</a>
+          <a class="btn btn-ghost" href="#datos">MIS DATOS</a>
+        </div>
+      </div>
+      <div class="hero-console">
+        <div class="console-top">
+          <span>PORTFOLIO_CORE</span>
+          <span class="status-dot">● ONLINE</span>
+        </div>
+        <div class="console-body">
+          <div class="console-line"><span>&gt;</span> estudiante: <b>ESPINAL HUAMAN LUIS</b></div>
+          <div class="console-line"><span>&gt;</span> código: <b>P01898G</b></div>
+          <div class="console-line"><span>&gt;</span> curso: <b>DESARROLLO DE APLICACIONES</b></div>
+          <div class="console-line"><span>&gt;</span> unidades: <b>04</b></div>
+          <div class="console-line"><span>&gt;</span> semanas: <b>16</b></div>
+          <div class="console-progress"><i></i></div>
+          <small>SISTEMA DE PORTAFOLIO INICIALIZADO...</small>
+        </div>
+      </div>
+    </section>
+
+    <section id="datos" class="section-wrap section">
+      <div class="section-heading">
+        <span class="section-number">01</span>
+        <div>
+          <p class="eyebrow">IDENTIDAD ACADÉMICA</p>
+          <h2>MIS DATOS</h2>
+        </div>
+      </div>
+
+      <div class="profile-grid">
+        <article class="profile-card profile-main">
+          <div class="avatar">EH</div>
+          <div>
+            <p class="label">ESTUDIANTE</p>
+            <h3>ESPINAL HUAMAN LUIS</h3>
+            <p>Ingeniería de Sistemas</p>
+          </div>
+        </article>
+        <article class="info-card">
+          <span class="info-icon">ID</span>
+          <div><p class="label">CÓDIGO UNIVERSITARIO</p><strong>P01898G</strong></div>
+        </article>
+        <article class="info-card">
+          <span class="info-icon">UNI</span>
+          <div><p class="label">UNIVERSIDAD</p><strong>UNIVERSIDAD PERUANA LOS ANDES</strong></div>
+        </article>
+        <article class="info-card">
+          <span class="info-icon">SYS</span>
+          <div><p class="label">CARRERA</p><strong>INGENIERÍA DE SISTEMAS</strong></div>
+        </article>
+      </div>
+    </section>
+
+    <section id="unidades" class="section-wrap section">
+      <div class="section-heading">
+        <span class="section-number">02</span>
+        <div>
+          <p class="eyebrow">CONTENIDO DEL CURSO</p>
+          <h2>UNIDADES Y SEMANAS</h2>
+        </div>
+      </div>
+      <p class="section-intro">
+        Selecciona una unidad o semana para consultar los trabajos publicados. Los archivos y enlaces se cargan desde el panel administrativo.
+      </p>
+
+      <div class="unit-grid">
+        <article class="unit-card" data-unit="1">
+          <div class="unit-top"><span>UNIT_01</span><b>01</b></div>
+          <h3>UNIDAD 1</h3>
+          <p>Fundamentos y primeras actividades del curso.</p>
+          <div class="week-grid">
+            <button data-week="1">SEM 01</button><button data-week="2">SEM 02</button>
+            <button data-week="3">SEM 03</button><button data-week="4">SEM 04</button>
+          </div>
+          <div class="unit-count" id="count-unit-1">0 trabajos</div>
+        </article>
+
+        <article class="unit-card" data-unit="2">
+          <div class="unit-top"><span>UNIT_02</span><b>02</b></div>
+          <h3>UNIDAD 2</h3>
+          <p>Desarrollo, implementación y prácticas.</p>
+          <div class="week-grid">
+            <button data-week="1">SEM 01</button><button data-week="2">SEM 02</button>
+            <button data-week="3">SEM 03</button><button data-week="4">SEM 04</button>
+          </div>
+          <div class="unit-count" id="count-unit-2">0 trabajos</div>
+        </article>
+
+        <article class="unit-card" data-unit="3">
+          <div class="unit-top"><span>UNIT_03</span><b>03</b></div>
+          <h3>UNIDAD 3</h3>
+          <p>Integración de conceptos y construcción de soluciones.</p>
+          <div class="week-grid">
+            <button data-week="1">SEM 01</button><button data-week="2">SEM 02</button>
+            <button data-week="3">SEM 03</button><button data-week="4">SEM 04</button>
+          </div>
+          <div class="unit-count" id="count-unit-3">0 trabajos</div>
+        </article>
+
+        <article class="unit-card" data-unit="4">
+          <div class="unit-top"><span>UNIT_04</span><b>04</b></div>
+          <h3>UNIDAD 4</h3>
+          <p>Proyecto, resultados y actividades finales.</p>
+          <div class="week-grid">
+            <button data-week="1">SEM 01</button><button data-week="2">SEM 02</button>
+            <button data-week="3">SEM 03</button><button data-week="4">SEM 04</button>
+          </div>
+          <div class="unit-count" id="count-unit-4">0 trabajos</div>
+        </article>
+      </div>
+
+      <div class="filter-bar">
+        <div>
+          <p class="label">FILTRO ACTUAL</p>
+          <strong id="filter-label">TODAS LAS ACTIVIDADES</strong>
+        </div>
+        <button class="btn btn-small btn-ghost" id="clear-filter">MOSTRAR TODO</button>
+      </div>
+
+      <div id="works-container" class="works-grid">
+        <div class="loading-card">CARGANDO ACTIVIDADES...</div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div>© 2026 ESPINAL HUAMAN LUIS</div>
+    <div>UNIVERSIDAD PERUANA LOS ANDES · INGENIERÍA DE SISTEMAS</div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

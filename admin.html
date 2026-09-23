@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin | Portafolio ULA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <div class="scanlines"></div>
+
+  <header class="topbar">
+    <a class="brand" href="index.html"><span class="brand-mark">◆</span><span>ULA<span class="accent">.ADMIN</span></span></a>
+    <nav>
+      <a href="index.html">← Portafolio</a>
+      <button id="logout-btn" class="nav-admin hidden">Cerrar sesión</button>
+    </nav>
+  </header>
+
+  <main class="section-wrap admin-page">
+    <section id="login-panel" class="auth-card">
+      <p class="eyebrow">ACCESO RESTRINGIDO</p>
+      <h1>PANEL ADMINISTRATIVO</h1>
+      <p>Inicia sesión con tu cuenta de Supabase. Solo los usuarios con rol <b>admin</b> podrán administrar trabajos.</p>
+      <form id="login-form">
+        <label>Correo electrónico<input id="login-email" type="email" required autocomplete="email"></label>
+        <label>Contraseña<input id="login-password" type="password" required autocomplete="current-password"></label>
+        <button class="btn btn-primary" type="submit">ENTRAR AL PANEL</button>
+        <p id="login-message" class="form-message"></p>
+      </form>
+      <details class="signup-help">
+        <summary>¿Todavía no tienes una cuenta?</summary>
+        <form id="signup-form">
+          <label>Correo<input id="signup-email" type="email" required></label>
+          <label>Contraseña<input id="signup-password" type="password" minlength="6" required></label>
+          <button class="btn btn-ghost" type="submit">CREAR CUENTA</button>
+          <p id="signup-message" class="form-message"></p>
+        </form>
+      </details>
+    </section>
+
+    <section id="dashboard" class="hidden">
+      <div class="admin-heading">
+        <div>
+          <p class="eyebrow">CONTROL CENTER</p>
+          <h1>GESTIONAR TRABAJOS</h1>
+          <p id="admin-user"></p>
+        </div>
+        <a class="btn btn-ghost" href="index.html">VER PORTAFOLIO</a>
+      </div>
+
+      <div class="admin-layout">
+        <form id="work-form" class="form-card">
+          <input type="hidden" id="work-id">
+          <input type="hidden" id="existing-file-path">
+          <div class="form-card-title">
+            <span>UPLOAD_MODULE</span>
+            <b id="form-mode">NUEVO TRABAJO</b>
+          </div>
+
+          <label>Título del trabajo
+            <input id="work-title" type="text" maxlength="160" required placeholder="Ej. Laboratorio de APIs REST">
+          </label>
+
+          <label>Descripción
+            <textarea id="work-description" rows="4" maxlength="1000" placeholder="Breve descripción del trabajo..."></textarea>
+          </label>
+
+          <div class="form-row">
+            <label>Unidad
+              <select id="work-unit" required>
+                <option value="1">Unidad 1</option><option value="2">Unidad 2</option>
+                <option value="3">Unidad 3</option><option value="4">Unidad 4</option>
+              </select>
+            </label>
+            <label>Semana
+              <select id="work-week" required>
+                <option value="1">Semana 1</option><option value="2">Semana 2</option>
+                <option value="3">Semana 3</option><option value="4">Semana 4</option>
+              </select>
+            </label>
+          </div>
+
+          <label>Tipo de trabajo
+            <select id="work-type">
+              <option value="archivo">Archivo</option>
+              <option value="enlace">Enlace</option>
+              <option value="proyecto">Proyecto</option>
+              <option value="evidencia">Evidencia</option>
+            </select>
+          </label>
+
+          <label>Enlace externo (opcional)
+            <input id="work-url" type="url" placeholder="https://...">
+          </label>
+
+          <label>Archivo (opcional)
+            <input id="work-file" type="file">
+            <small>Admite PDF, Word, PowerPoint, Excel, ZIP/RAR, imágenes, código y otros archivos permitidos por Storage.</small>
+          </label>
+
+          <div class="form-actions">
+            <button class="btn btn-primary" type="submit" id="save-btn">PUBLICAR TRABAJO</button>
+            <button class="btn btn-ghost hidden" type="button" id="cancel-edit">CANCELAR EDICIÓN</button>
+          </div>
+          <p id="work-message" class="form-message"></p>
+        </form>
+
+        <section class="list-card">
+          <div class="list-card-title">
+            <div><span>DATABASE</span><b>TRABAJOS PUBLICADOS</b></div>
+            <span id="total-works" class="counter">0</span>
+          </div>
+          <div id="admin-works" class="admin-works-list">
+            <div class="loading-card">CARGANDO...</div>
+          </div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">PANEL ADMINISTRATIVO · PORTAFOLIO ACADÉMICO</footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>
