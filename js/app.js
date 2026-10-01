@@ -77,6 +77,21 @@ function updateUnitCounts() {
   }
 }
 
+// Todas las rutas de archivos de un trabajo (compatible con trabajos antiguos)
+function getWorkPaths(work) {
+  if (work.file_paths && work.file_paths.length) return work.file_paths;
+  return work.file_path ? [work.file_path] : [];
+}
+
+function getPublicUrl(path) {
+  return supabaseClient.storage.from(window.SUPABASE_BUCKET).getPublicUrl(path).data.publicUrl;
+}
+
+// Nombre legible: quita la carpeta y el prefijo de fecha
+function getFileName(path) {
+  return path.split("/").pop().replace(/^\d+-/, "");
+}
+
 function renderWorks() {
   let works = allWorks.filter(w => {
     if (activeUnit && Number(w.unit) !== activeUnit) return false;
@@ -93,21 +108,47 @@ function renderWorks() {
   }
 
   worksContainer.innerHTML = works.map(work => {
-    const fileUrl = work.file_path
-      ? supabaseClient.storage.from(window.SUPABASE_BUCKET).getPublicUrl(work.file_path).data.publicUrl
-      : null;
-    const targetUrl = work.external_url || fileUrl;
-    const linkText = work.external_url ? "ABRIR ENLACE ↗" : "VER / DESCARGAR ARCHIVO ↗";
+    const paths = getWorkPaths(work);
+    const hasMany = paths.length > 1;
+
+    let actionHtml = "";
+
+    if (hasMany) {
+      // Varios archivos: desplegable con todos adentro
+      const items = paths.map((p, i) => `
+        <li>
+          <span class="file-num">${String(i + 1).padStart(2, "0")}</span>
+          <a href="${escapeAttr(getPublicUrl(p))}" target="_blank" rel="noopener noreferrer">${escapeHtml(getFileName(p))} ↗</a>
+        </li>`).join("");
+
+      const extLink = work.external_url
+        ? `<li><span class="file-num">↗</span><a href="${escapeAttr(work.external_url)}" target="_blank" rel="noopener noreferrer">ABRIR ENLACE</a></li>`
+        : "";
+
+      actionHtml = `<details class="work-files">
+        <summary>VER ${paths.length} ARCHIVOS</summary>
+        <ul>${items}${extLink}</ul>
+      </details>`;
+    } else {
+      // Un solo archivo o enlace: igual que antes
+      const fileUrl = paths[0] ? getPublicUrl(paths[0]) : null;
+      const targetUrl = work.external_url || fileUrl;
+      const linkText = work.external_url ? "ABRIR ENLACE ↗" : "VER / DESCARGAR ARCHIVO ↗";
+      actionHtml = targetUrl
+        ? `<a class="work-link" href="${escapeAttr(targetUrl)}" target="_blank" rel="noopener noreferrer">${linkText}</a>`
+        : '<span class="work-link">SIN ARCHIVO / ENLACE</span>';
+    }
 
     return `<article class="work-card">
       <div class="work-meta">
         <span class="tag">UNIDAD ${work.unit}</span>
         <span class="tag">SEMANA ${work.week}</span>
         <span class="tag">${escapeHtml((work.work_type || "TRABAJO").toUpperCase())}</span>
+        ${hasMany ? `<span class="tag">${paths.length} ARCHIVOS</span>` : ""}
       </div>
       <h3>${escapeHtml(work.title)}</h3>
       <p>${escapeHtml(work.description || "Actividad académica del curso Desarrollo de Aplicaciones.")}</p>
-      ${targetUrl ? `<a class="work-link" href="${escapeAttr(targetUrl)}" target="_blank" rel="noopener noreferrer">${linkText}</a>` : '<span class="work-link">SIN ARCHIVO / ENLACE</span>'}
+      ${actionHtml}
     </article>`;
   }).join("");
 }
