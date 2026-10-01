@@ -110,6 +110,12 @@ async function uploadFile(file) {
   return path;
 }
 
+// Devuelve todas las rutas de archivos de un trabajo (compatible con trabajos antiguos)
+function getWorkPaths(work) {
+  if (work.file_paths && work.file_paths.length) return work.file_paths;
+  return work.file_path ? [work.file_path] : [];
+}
+
 workForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   workMessage.textContent = "Guardando...";
@@ -117,71 +123,43 @@ workForm.addEventListener("submit", async (e) => {
 
   try {
     const id = document.getElementById("work-id").value;
-    const oldPath = document.getElementById("existing-file-path").value;
     const files = Array.from(fileInput.files);
 
-    const baseTitle = document.getElementById("work-title").value.trim();
-    const basePayload = {
+    // Rutas que ya tenía el trabajo (si se está editando)
+    const currentWork = id ? works.find(w => w.id === id) : null;
+    const paths = currentWork ? [...getWorkPaths(currentWork)] : [];
+
+    // Subir todos los archivos nuevos
+    for (let i = 0; i < files.length; i++) {
+      workMessage.textContent = `Subiendo archivo ${i + 1} de ${files.length}...`;
+      paths.push(await uploadFile(files[i]));
+    }
+
+    workMessage.textContent = "Guardando...";
+
+    const payload = {
+      title: document.getElementById("work-title").value.trim(),
       description: document.getElementById("work-description").value.trim(),
       unit: Number(document.getElementById("work-unit").value),
       week: Number(document.getElementById("work-week").value),
       work_type: document.getElementById("work-type").value,
-      external_url: document.getElementById("work-url").value.trim() || null
+      external_url: document.getElementById("work-url").value.trim() || null,
+      file_paths: paths,
+      file_path: paths[0] || null   // compatibilidad con el portafolio actual
     };
 
+    let result;
     if (id) {
-      // ----- EDITAR (un solo archivo, como antes) -----
-      let filePath = oldPath || null;
-      const file = files[0];
-
-      if (file) {
-        filePath = await uploadFile(file);
-        if (oldPath && oldPath !== filePath) {
-          await supabaseClient.storage.from(window.SUPABASE_BUCKET).remove([oldPath]);
-        }
-      }
-
-      const { error } = await supabaseClient
-        .from("works")
-        .update({ ...basePayload, title: baseTitle, file_path: filePath })
-        .eq("id", id);
-      if (error) throw error;
-
-      workMessage.textContent = "Trabajo actualizado correctamente.";
-
-    } else if (files.length > 1) {
-      // ----- NUEVO CON VARIOS ARCHIVOS: un trabajo por archivo -----
-      const rows = [];
-      for (let i = 0; i < files.length; i++) {
-        workMessage.textContent = `Subiendo archivo ${i + 1} de ${files.length}...`;
-        const file = files[i];
-        const filePath = await uploadFile(file);
-        const nameNoExt = file.name.replace(/\.[^/.]+$/, "");
-        rows.push({
-          ...basePayload,
-          title: `${baseTitle} - ${nameNoExt}`.slice(0, 160),
-          file_path: filePath
-        });
-      }
-
-      const { error } = await supabaseClient.from("works").insert(rows);
-      if (error) throw error;
-
-      workMessage.textContent = `${rows.length} trabajos publicados correctamente.`;
-
+      result = await supabaseClient.from("works").update(payload).eq("id", id);
     } else {
-      // ----- NUEVO CON 0 O 1 ARCHIVO -----
-      const filePath = files[0] ? await uploadFile(files[0]) : null;
-
-      const { error } = await supabaseClient
-        .from("works")
-        .insert({ ...basePayload, title: baseTitle, file_path: filePath });
-      if (error) throw error;
-
-      workMessage.textContent = "Trabajo publicado correctamente.";
+      result = await supabaseClient.from("works").insert(payload);
     }
 
-    const msg = workMessage.textContent;
+    if (result.error) throw result.error;
+
+    const msg = id
+      ? "Trabajo actualizado correctamente."
+      : `Trabajo publicado correctamente${paths.length > 1 ? ` con ${paths.length} archivos` : ""}.`;
     resetForm();
     workMessage.textContent = msg;
     await loadAdminWorks();
@@ -220,18 +198,21 @@ function renderAdminWorks() {
     return;
   }
 
-  worksList.innerHTML = works.map(work => `
+  worksList.innerHTML = works.map(work => {
+    const n = getWorkPaths(work).length;
+    const filesLabel = n > 1 ? ` · ${n} archivos` : "";
+    return `
     <article class="admin-work">
       <div>
         <h3>${escapeHtml(work.title)}</h3>
-        <div class="meta">Unidad ${work.unit} · Semana ${work.week} · ${escapeHtml(work.work_type || "trabajo")}</div>
+        <div class="meta">Unidad ${work.unit} · Semana ${work.week} · ${escapeHtml(work.work_type || "trabajo")}${filesLabel}</div>
       </div>
       <div class="admin-actions">
         <button class="icon-btn" onclick="editWork('${work.id}')">EDITAR</button>
         <button class="icon-btn danger" onclick="deleteWork('${work.id}')">BORRAR</button>
       </div>
-    </article>
-  `).join("");
+    </article>`;
+  }).join("");
 }
 
 window.editWork = function(id) {
@@ -250,6 +231,10 @@ window.editWork = function(id) {
   formMode.textContent = "EDITANDO TRABAJO";
   saveBtn.textContent = "GUARDAR CAMBIOS";
   cancelEdit.classList.remove("hidden");
+  if (fileCount) {
+    const n = getWorkPaths(work).length;
+    fileCount.textContent = `Este trabajo tiene ${n} archivo(s). Los que selecciones se AGREGAN a los existentes.`;
+  }
   document.getElementById("work-form").scrollIntoView({ behavior: "smooth" });
 };
 
@@ -267,8 +252,9 @@ window.deleteWork = async function(id) {
     return;
   }
 
-  if (work.file_path) {
-    await supabaseClient.storage.from(window.SUPABASE_BUCKET).remove([work.file_path]);
+  const paths = getWorkPaths(work);
+  if (paths.length) {
+    await supabaseClient.storage.from(window.SUPABASE_BUCKET).remove(paths);
   }
 
   workMessage.textContent = "Trabajo eliminado.";
