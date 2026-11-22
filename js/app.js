@@ -6,11 +6,62 @@ const supabaseClient = window.supabase.createClient(
 const worksContainer = document.getElementById("works-container");
 const filterLabel = document.getElementById("filter-label");
 const clearFilter = document.getElementById("clear-filter");
+
+// Modal "añadir más" (solo admin)
+const addModal = document.getElementById("add-modal");
+const addForm = document.getElementById("add-form");
+const addWorkName = document.getElementById("add-work-name");
+const addFiles = document.getElementById("add-files");
+const addFilesCount = document.getElementById("add-files-count");
+const addLink = document.getElementById("add-link");
+const addLinkLabel = document.getElementById("add-link-label");
+const addSave = document.getElementById("add-save");
+const addCancel = document.getElementById("add-cancel");
+const addMessage = document.getElementById("add-message");
+const addFilesHelp = addFilesCount ? addFilesCount.textContent : "";
+
 let allWorks = [];
 let activeUnit = null;
 let activeWeek = null;
+let isAdmin = false;
+let addingWorkId = null;
 
-document.addEventListener("DOMContentLoaded", loadWorks);
+document.addEventListener("DOMContentLoaded", init);
+
+async function init() {
+  setupListeners();
+  await checkAdminRole();
+  await loadWorks();
+
+  // Si inicia o cierra sesión en otra pestaña, actualiza los botones
+  supabaseClient.auth.onAuthStateChange(() => {
+    setTimeout(async () => {
+      await checkAdminRole();
+      renderWorks();
+    }, 0);
+  });
+}
+
+/* ---------- Rol de administrador ---------- */
+
+async function checkAdminRole() {
+  try {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (!session) { isAdmin = false; return; }
+
+    const { data, error } = await supabaseClient
+      .from("profiles")
+      .select("role")
+      .eq("id", session.user.id)
+      .single();
+
+    isAdmin = !error && !!data && data.role === "admin";
+  } catch (e) {
+    isAdmin = false;
+  }
+}
+
+/* ---------- Carga de trabajos ---------- */
 
 async function loadWorks() {
   worksContainer.innerHTML = '<div class="loading-card">CARGANDO ACTIVIDADES...</div>';
@@ -30,7 +81,11 @@ async function loadWorks() {
   allWorks = data || [];
   updateUnitCounts();
   renderWorks();
+}
 
+/* ---------- Listeners (se registran una sola vez) ---------- */
+
+function setupListeners() {
   document.querySelectorAll(".unit-card").forEach(card => {
     card.addEventListener("click", (event) => {
       if (!event.target.matches("button")) return;
@@ -51,7 +106,33 @@ async function loadWorks() {
     filterLabel.textContent = "TODAS LAS ACTIVIDADES";
     renderWorks();
   });
+
+  // Botón "+ AÑADIR" de cada tarjeta (delegación de eventos)
+  worksContainer.addEventListener("click", (event) => {
+    const btn = event.target.closest(".add-more-btn");
+    if (!btn || !isAdmin) return;
+    openAddModal(btn.dataset.id);
+  });
+
+  if (addModal) {
+    addCancel.addEventListener("click", closeAddModal);
+    addModal.addEventListener("click", (event) => {
+      if (event.target === addModal) closeAddModal();
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !addModal.classList.contains("hidden")) closeAddModal();
+    });
+    addFiles.addEventListener("change", () => {
+      const n = addFiles.files.length;
+      addFilesCount.textContent = n > 1
+        ? `${n} archivos seleccionados`
+        : (n === 1 ? addFiles.files[0].name : addFilesHelp);
+    });
+    addForm.addEventListener("submit", saveExtraResources);
+  }
 }
+
+/* ---------- Filtros ---------- */
 
 function setFilter(unit, week) {
   activeUnit = unit;
@@ -77,10 +158,17 @@ function updateUnitCounts() {
   }
 }
 
-// Todas las rutas de archivos de un trabajo (compatible con trabajos antiguos)
+/* ---------- Archivos y enlaces de un trabajo ---------- */
+
+// Rutas de archivos (compatible con trabajos antiguos)
 function getWorkPaths(work) {
   if (work.file_paths && work.file_paths.length) return work.file_paths;
   return work.file_path ? [work.file_path] : [];
+}
+
+// Enlaces extra añadidos desde el modo admin: [{ url, label }]
+function getExtraLinks(work) {
+  return Array.isArray(work.extra_links) ? work.extra_links : [];
 }
 
 function getPublicUrl(path) {
@@ -92,8 +180,25 @@ function getFileName(path) {
   return path.split("/").pop().replace(/^\d+-/, "");
 }
 
+// Lista unificada: archivos + enlace principal + enlaces extra
+function getWorkItems(work) {
+  const items = [];
+  getWorkPaths(work).forEach(p => {
+    items.push({ kind: "file", url: getPublicUrl(p), label: getFileName(p) });
+  });
+  if (work.external_url) {
+    items.push({ kind: "link", url: work.external_url, label: "ABRIR ENLACE" });
+  }
+  getExtraLinks(work).forEach(l => {
+    if (l && l.url) items.push({ kind: "link", url: l.url, label: l.label || "ABRIR ENLACE" });
+  });
+  return items;
+}
+
+/* ---------- Pintar tarjetas ---------- */
+
 function renderWorks() {
-  let works = allWorks.filter(w => {
+  const works = allWorks.filter(w => {
     if (activeUnit && Number(w.unit) !== activeUnit) return false;
     if (activeWeek && Number(w.week) !== activeWeek) return false;
     return true;
@@ -108,50 +213,139 @@ function renderWorks() {
   }
 
   worksContainer.innerHTML = works.map(work => {
-    const paths = getWorkPaths(work);
-    const hasMany = paths.length > 1;
+    const items = getWorkItems(work);
+    const hasMany = items.length > 1;
 
     let actionHtml = "";
 
     if (hasMany) {
-      // Varios archivos: desplegable con todos adentro
-      const items = paths.map((p, i) => `
+      const list = items.map((it, i) => `
         <li>
           <span class="file-num">${String(i + 1).padStart(2, "0")}</span>
-          <a href="${escapeAttr(getPublicUrl(p))}" target="_blank" rel="noopener noreferrer">${escapeHtml(getFileName(p))} ↗</a>
+          <a href="${escapeAttr(it.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(it.label)} ↗</a>
         </li>`).join("");
 
-      const extLink = work.external_url
-        ? `<li><span class="file-num">↗</span><a href="${escapeAttr(work.external_url)}" target="_blank" rel="noopener noreferrer">ABRIR ENLACE</a></li>`
-        : "";
-
       actionHtml = `<details class="work-files">
-        <summary>VER ${paths.length} ARCHIVOS</summary>
-        <ul>${items}${extLink}</ul>
+        <summary>VER ${items.length} RECURSOS</summary>
+        <ul>${list}</ul>
       </details>`;
+    } else if (items.length === 1) {
+      const it = items[0];
+      const linkText = it.kind === "link" ? "ABRIR ENLACE ↗" : "VER / DESCARGAR ARCHIVO ↗";
+      actionHtml = `<a class="work-link" href="${escapeAttr(it.url)}" target="_blank" rel="noopener noreferrer">${linkText}</a>`;
     } else {
-      // Un solo archivo o enlace: igual que antes
-      const fileUrl = paths[0] ? getPublicUrl(paths[0]) : null;
-      const targetUrl = work.external_url || fileUrl;
-      const linkText = work.external_url ? "ABRIR ENLACE ↗" : "VER / DESCARGAR ARCHIVO ↗";
-      actionHtml = targetUrl
-        ? `<a class="work-link" href="${escapeAttr(targetUrl)}" target="_blank" rel="noopener noreferrer">${linkText}</a>`
-        : '<span class="work-link">SIN ARCHIVO / ENLACE</span>';
+      actionHtml = '<span class="work-link">SIN ARCHIVO / ENLACE</span>';
     }
+
+    // Botón visible SOLO para el administrador
+    const adminBtn = isAdmin
+      ? `<div><button type="button" class="add-more-btn" data-id="${escapeAttr(work.id)}">+ AÑADIR ARCHIVOS / ENLACES</button></div>`
+      : "";
 
     return `<article class="work-card">
       <div class="work-meta">
         <span class="tag">UNIDAD ${work.unit}</span>
         <span class="tag">SEMANA ${work.week}</span>
         <span class="tag">${escapeHtml((work.work_type || "TRABAJO").toUpperCase())}</span>
-        ${hasMany ? `<span class="tag">${paths.length} ARCHIVOS</span>` : ""}
+        ${hasMany ? `<span class="tag">${items.length} RECURSOS</span>` : ""}
       </div>
       <h3>${escapeHtml(work.title)}</h3>
       <p>${escapeHtml(work.description || "Actividad académica del curso Desarrollo de Aplicaciones.")}</p>
       ${actionHtml}
+      ${adminBtn}
     </article>`;
   }).join("");
 }
+
+/* ---------- Modal: añadir más archivos / enlaces ---------- */
+
+function openAddModal(workId) {
+  const work = allWorks.find(w => String(w.id) === String(workId));
+  if (!work) return;
+
+  addingWorkId = work.id;
+  addForm.reset();
+  addFilesCount.textContent = addFilesHelp;
+  addMessage.textContent = "";
+  addWorkName.textContent = `Trabajo: ${work.title}`;
+  addModal.classList.remove("hidden");
+}
+
+function closeAddModal() {
+  addModal.classList.add("hidden");
+  addingWorkId = null;
+}
+
+// Sube un archivo al Storage y devuelve su ruta
+async function uploadFile(file) {
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+  const folder = crypto.randomUUID();
+  const path = `${folder}/${Date.now()}-${safeName}`;
+
+  const { error } = await supabaseClient.storage
+    .from(window.SUPABASE_BUCKET)
+    .upload(path, file, { upsert: false });
+
+  if (error) throw error;
+  return path;
+}
+
+async function saveExtraResources(event) {
+  event.preventDefault();
+  if (!isAdmin) return;
+
+  const work = allWorks.find(w => String(w.id) === String(addingWorkId));
+  if (!work) return;
+
+  const files = Array.from(addFiles.files);
+  const url = addLink.value.trim();
+  const label = addLinkLabel.value.trim();
+
+  if (!files.length && !url) {
+    addMessage.textContent = "Selecciona al menos un archivo o escribe un enlace.";
+    return;
+  }
+
+  addSave.disabled = true;
+
+  try {
+    // Lo que ya tenía + lo nuevo (se AGREGA, no se reemplaza)
+    const paths = [...getWorkPaths(work)];
+    for (let i = 0; i < files.length; i++) {
+      addMessage.textContent = `Subiendo archivo ${i + 1} de ${files.length}...`;
+      paths.push(await uploadFile(files[i]));
+    }
+
+    const links = [...getExtraLinks(work)];
+    if (url) links.push({ url, label: label || null });
+
+    addMessage.textContent = "Guardando...";
+
+    const { data, error } = await supabaseClient
+      .from("works")
+      .update({
+        file_paths: paths,
+        file_path: paths[0] || null,
+        extra_links: links
+      })
+      .eq("id", work.id)
+      .select();
+
+    if (error) throw error;
+    if (!data || !data.length) {
+      throw new Error("No tienes permiso para modificar este trabajo. Inicia sesión como administrador.");
+    }
+
+    closeAddModal();
+    await loadWorks();
+  } catch (err) {
+    addMessage.textContent = err.message || "Ocurrió un error.";
+  } finally {
+    addSave.disabled = false;
+  }
+}
+
+/* ---------- Utilidades ---------- */
 
 function escapeHtml(value) {
   return String(value ?? "").replace(/[&<>"']/g, ch => ({
