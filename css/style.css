@@ -605,6 +605,97 @@ body {
 }
 
 /* ============================================================
+   AÑADIR MÁS RECURSOS (SOLO ADMIN)  ← NUEVO
+   ============================================================ */
+.add-more-btn {
+  margin-top: 16px;
+  padding: 10px 14px;
+  background: rgba(0, 234, 255, .035);
+  color: #00eaff;
+  border: 1px dashed rgba(0, 234, 255, .55);
+  font: 700 10px Orbitron, sans-serif;
+  letter-spacing: .6px;
+  cursor: pointer;
+  transition: .2s;
+}
+
+.add-more-btn:hover {
+  background: rgba(0, 234, 255, .1);
+  border-style: solid;
+  box-shadow: 0 0 16px rgba(0, 234, 255, .2);
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(2, 5, 9, .85);
+  backdrop-filter: blur(4px);
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 520px;
+  max-height: 92vh;
+  overflow-y: auto;
+  padding: 26px;
+  border: 1px solid rgba(0, 234, 255, .4);
+  background: linear-gradient(145deg, rgba(14, 20, 27, .98), rgba(7, 11, 16, .99));
+  box-shadow: 0 0 40px rgba(0, 234, 255, .15);
+  display: grid;
+  gap: 14px;
+}
+
+.modal-card h3 {
+  font: 700 20px Orbitron, sans-serif;
+  margin: 0;
+}
+
+.modal-sub {
+  margin: 0;
+  color: #8498a2;
+  font-size: 16px;
+}
+
+.modal-card label {
+  display: grid;
+  gap: 7px;
+  color: #8298a3;
+  font: 600 12px Orbitron, sans-serif;
+}
+
+.modal-card input {
+  width: 100%;
+  background: #070b10;
+  border: 1px solid rgba(255, 255, 255, .1);
+  color: #eaf8ff;
+  border-radius: 3px;
+  padding: 11px 12px;
+  font: 500 16px Rajdhani, sans-serif;
+  outline: none;
+}
+
+.modal-card input:focus {
+  border-color: #00eaff;
+  box-shadow: 0 0 0 2px rgba(0, 234, 255, .07);
+}
+
+.modal-card small {
+  color: #536a74;
+  font: 500 12px Rajdhani, sans-serif;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 9px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+/* ============================================================
    PIE DE PÁGINA
    ============================================================ */
 .footer {
